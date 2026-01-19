@@ -1,61 +1,32 @@
-# CLAUDE.md
+# MCP MusicBox
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> See `AGENTS.md` for full development guide and architecture details.
 
-## Project Overview
+## Overview
 
-MCP server that bridges MCP clients (like Claude Desktop) with Sonic Pi for live coding music. Uses python-sonic (psonic) to send OSC messages to Sonic Pi's daemon.
+MCP server bridging Claude Desktop with Sonic Pi for live coding music via OSC.
 
-## Development Commands
+## Status: Development
+
+Single-file FastMCP server using python-sonic (psonic).
+
+## Quick Commands
 
 ```bash
-# Install dependencies
-uv sync
-
-# Run the MCP server (for development)
-uv run mcp-musicbox/server.py
-
-# Lint code
-uv run ruff check .
-
-# Format code
-uv run ruff format .
+uv sync                          # Install dependencies
+uv run mcp-musicbox/server.py    # Run MCP server
+uv run ruff check .              # Lint
+uv run ruff format .             # Format
 ```
 
-## Architecture
+## Key Files
 
-### MCP Server (`mcp-musicbox/server.py`)
+- `mcp-musicbox/server.py` - Single-file FastMCP server
+- `SHARED_STATE_PATH` env var - Live parameters JSON
 
-Single-file FastMCP server exposing these tools:
-- `initialize_sonic_pi()` - Starts Sonic Pi app and establishes connection
-- `reconnect_sonic_pi()` - Reconnects without restarting (for session recovery)
-- `play_music(code)` - Executes Sonic Pi Ruby code
-- `stop_music()` - Stops all audio
-- `change_mix(parameters)` - Updates live mix parameters via Time State
-- `read_shared_state()` - Reads current parameter values
-- `debug_sonic_pi_connection()` - Shows connection diagnostics
+## Design Decisions (Do Not Re-Ask)
 
-### Connection Flow
-
-1. Server parses `~/.sonic-pi/log/daemon.log` to extract:
-   - Daemon token
-   - GUI port (`gui-send-to-spider`)
-   - OSC port (`osc-cues`)
-2. Calls `psonic.set_server_parameter()` with these values
-3. Uses `psonic.run()` to send code and `psonic.stop()` to halt playback
-
-### Live Mix System
-
-Parameters are stored in a JSON file (path configured via `SHARED_STATE_PATH`) and sent to Sonic Pi via Time State (`set :param, value`). This allows real-time effect control without stopping music.
-
-## Key Configuration
-
-- `SONIC_PI_APP_PATH` - macOS app location (default: `/Applications/Sonic Pi.app`)
-- `SHARED_STATE_PATH` - Path to shared_state.json for live parameters (must be configured)
-
-## Dependencies
-
-- `mcp` - Model Context Protocol SDK
-- `python-sonic` (psonic) - Python-to-Sonic Pi bridge
-- `python-osc` - OSC protocol support
-- `ruff` - Linting and formatting
+- **python-sonic (psonic)**: Established library for Sonic Pi communication
+- **Single-file server**: Keep simple, no complex module structure needed
+- **Time State for live mix**: Enables parameter changes without stopping music
+- **Parse daemon.log**: Extract connection params from Sonic Pi's log file
